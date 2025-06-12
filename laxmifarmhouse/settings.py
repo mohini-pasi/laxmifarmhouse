@@ -23,12 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-l1*gg81vwo$wk$7vb2$rdb8g(%+sqqk69za9*ee(@u9m+6e!_v'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['laxmifarmhouse.onrender.com']  # Will update this later
-
-
-
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -137,9 +134,3 @@ MESSAGE_TAGS = {
     messages.WARNING: 'warning',
     messages.ERROR: 'danger',
 }
-
-
-import os
-
-# Add this at the bottom:
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
