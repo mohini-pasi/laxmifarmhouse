@@ -1,0 +1,112 @@
+/* styles.css */
+
+/* Hero Section */
+.hero-header {
+  background-image: url('/static/images/hero.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 100px 20px;
+  position: relative;
+  text-align: center;
+  color: #dfdbdb;
+  font-family: 'Times New Roman', serif;
+}
+
+.hero-header .overlay {
+  background-color: rgba(0, 0, 0, 0.55); /* slightly stronger overlay for better contrast */
+  padding: 50px 20px;
+  border-radius: 15px;
+  display: inline-block;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.hero-header h1,
+.hero-header p {
+  margin-bottom: 20px;
+}
+
+/* Custom Borders & Backgrounds */
+.border-primary {
+  border: 2px solid #7d2e4b !important; /* deep maroon color */
+}
+
+.bg-primary-custom {
+  background-color: #e8f5e9 !important; /* very light green */
+}
+
+.text-primary {
+  color: #2e7d32 !important; /* dark green */
+}
+
+/* Card Styling */
+.card {
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 20px rgba(0, 100, 0, 0.25);
+  border-color: #7d2e4b;
+}
+
+/* Image inside card */
+.card-img-top {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  height: 180px;
+  object-fit: cover;
+}
+
+/* Card Titles & Text */
+.card-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #2e7d32;
+  margin-bottom: 0.5rem;
+}
+
+.card-text {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 1rem;
+}
+
+/* Buttons */
+.btn-outline-primary {
+  color: #2e7d32;
+  border-color: #2e7d32;
+  font-weight: 600;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.btn-outline-primary:hover {
+  background-color: #2e7d32;
+  color: white;
+  border-color: #2e7d32;
+}
+
+/* Form Styling */
+form label {
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+/* Footer */
+footer {
+  background-color: #2e7d32;
+  color: #f1f1f1;
+  font-weight: 500;
+}
+
+/* Utility Hover Shadow */
+.hover-shadow:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 18px rgba(46, 125, 50, 0.5);
+  transition: all 0.3s ease-in-out;
+}
+

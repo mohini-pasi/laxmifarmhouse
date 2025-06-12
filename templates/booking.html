@@ -1,0 +1,158 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Book Now - Laxmi Farmhouse</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    #qr-code img {
+      width: 200px;
+      height: 200px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <div class="card shadow-lg p-4">
+      <h2 class="text-center mb-4">Book Now - Laxmi Farmhouse</h2>
+
+      {% if message %}
+        <div class="alert alert-info">{{ message }}</div>
+      {% endif %}
+
+      <form method="POST" class="row g-4" onsubmit="return validateForm()">
+        {% csrf_token %}
+        <!-- Name & Phone -->
+        <div class="col-md-6">
+          <label for="name" class="form-label">Name</label>
+          <input type="text" class="form-control" name="name" id="name" required />
+        </div>
+        <div class="col-md-6">
+          <label for="phone" class="form-label">Phone</label>
+          <input
+            type="text"
+            class="form-control"
+            name="phone"
+            id="phone"
+            pattern="\d{10}"
+            maxlength="10"
+            required
+            placeholder="Enter 10-digit phone number"
+          />
+        </div>
+
+        <!-- Members & Farmhouse -->
+        <div class="col-md-4">
+          <label for="members" class="form-label">Members</label>
+          <input type="number" class="form-control" name="members" id="members" min="1" max="50" required />
+        </div>
+        <div class="col-md-4">
+          <label for="farmhouse" class="form-label">Farmhouse</label>
+          <select class="form-select" name="farmhouse" id="farmhouse" required>
+            <option selected disabled>Select</option>
+            <option value="AK Farmhouse">AK Farmhouse</option>
+            <option value="Malusure Farmhouse">Malusure Farmhouse</option>
+          </select>
+        </div>
+
+        <!-- Check-in & Check-out -->
+        <div class="col-md-4">
+          <label for="checkin" class="form-label">Check-in Date</label>
+          <input type="date" class="form-control" name="checkin" id="checkin" required />
+        </div>
+        <div class="col-md-4">
+          <label for="checkout" class="form-label">Check-out Date</label>
+          <input type="date" class="form-control" name="checkout" id="checkout" required />
+        </div>
+
+        <!-- Advance Payment -->
+        <div class="col-md-4">
+          <label for="advance" class="form-label">Advance Payment (₹)</label>
+          <input
+            type="number"
+            class="form-control"
+            name="advance"
+            id="advance"
+            min="1000"
+            required
+            placeholder="Min ₹1000"
+          />
+        </div>
+
+        <!-- QR Display -->
+        <div class="col-12 text-center" id="qr-code">
+          <label class="form-label">Scan to Pay Advance (mohinipasi1122-1@oksbi)</label>
+          <div>
+            <img src="{% static 'images/owner-qr.png' %}" alt="Owner UPI QR Code" />
+            <p class="mt-2 fw-bold">Please scan and pay the same amount you entered above</p>
+          </div>
+        </div>
+
+        <!-- WhatsApp Share -->
+        <div class="col-md-6">
+          <label class="form-label">Share on WhatsApp</label>
+          <div class="text-center">
+            <button type="button" class="btn btn-info" id="whatsappShareBtn">
+              Share Payment via WhatsApp
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="col-12 text-center">
+          <button type="submit" class="btn btn-success px-5">Submit Booking</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function validateForm() {
+      const checkin = new Date(document.getElementById('checkin').value);
+      const checkout = new Date(document.getElementById('checkout').value);
+      const advance = Number(document.getElementById('advance').value);
+
+      const today = new Date();
+      const maxAdvanceDate = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
+
+      if (checkout < checkin) {
+        alert('Check-out date must be the same or after the check-in date.');
+        return false;
+      }
+
+      if (checkin > maxAdvanceDate) {
+        alert('Advance booking can be made only up to 1 month before the check-in date.');
+        return false;
+      }
+
+      if (advance < 1000) {
+        alert('Advance payment must be at least ₹1000.');
+        return false;
+      }
+
+      return true;
+    }
+
+    document.getElementById('whatsappShareBtn').addEventListener('click', function () {
+      const phone = document.getElementById('phone').value;
+      const advance = document.getElementById('advance').value;
+      if (!phone || phone.length !== 10) {
+        alert('Please enter a valid 10-digit phone number before sharing.');
+        return;
+      }
+      if (!advance || advance < 1000) {
+        alert('Please enter a valid advance payment amount before sharing.');
+        return;
+      }
+      const message = `I have made an advance payment of ₹${advance} for the farmhouse booking. Phone: ${phone}`;
+      const whatsappLink = `https://wa.me/919594359714?text=${encodeURIComponent(message)}`;
+      window.open(whatsappLink, '_blank');
+    });
+  
+  <form method="POST" action="{% url 'booking' %}">
+
+  </script>
+</body>
+</html>

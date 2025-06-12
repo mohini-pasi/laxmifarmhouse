@@ -1,0 +1,222 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Laxmi Farmhouse</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    .navbar-brand {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .card-img-container {
+      position: relative;
+      width: 100%;
+      padding-top: 75%;
+      overflow: hidden;
+      border-radius: 0.5rem;
+    }
+    .card-img-container img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .hero-header {
+      background: url('{% static "images/hero.jpg" %}') center center/cover no-repeat;
+      padding: 100px 20px;
+      text-align: center;
+      color: #fff;
+    }
+    .hero-header .overlay {
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 50px 20px;
+      border-radius: 15px;
+      display: inline-block;
+      max-width: 800px;
+    }
+    .hero-header h1 {
+      font-family: 'Times New Roman', 'Copperplate', fantasy;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-success position-relative">
+  <div class="container-fluid">
+    <a class="navbar-brand mx-auto" href="#">
+      <img src="{% static 'images/logo.png' %}" alt="Laxmi Farmhouse " width="90" height="90" class="rounded-circle" />
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+      <ul class="navbar-nav">
+        <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="/booking">Booking</a></li>
+        <li class="nav-item"><a class="nav-link" href="/admin/login">Admin</a></li>
+        <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+        <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Flash Messages -->
+{% if messages %}
+  <div id="message-box">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+
+  <script>
+    // Hide the message box after 5 seconds
+    setTimeout(function() {
+      const msg = document.getElementById('message-box');
+      if (msg) msg.style.display = 'none';
+    }, 5000); // 5000ms = 5 sec
+  </script>
+{% endif %}
+
+
+
+  <!-- Hero Section -->
+  <header class="hero-header">
+    <div class="overlay">
+      <h1>Welcome to Laxmi Farmhouse Resort Management</h1>
+      <div class="my-3">
+        <a href="https://www.instagram.com/shishirsalunkhe/" target="_blank">
+          <img src="{% static 'icons/instagram.png' %}" alt="Instagram" width="30" class="me-2" />
+        </a>
+        <a href="https://www.facebook.com/your_fb_id" target="_blank">
+          <img src="{% static 'icons/facebook.png' %}" alt="Facebook" width="30" class="me-2" />
+        </a>
+        <a href="https://wa.me/919594359714" target="_blank">
+          <img src="{% static 'icons/whatsapp.png' %}" alt="WhatsApp" width="30" />
+        </a>
+      </div>
+      <p class="lead">Book your perfect getaway with us today!</p>
+      <a href="/booking" class="btn btn-danger btn-lg">Book Now</a>
+    </div>
+  </header>
+
+  <!-- Farmhouses Section -->
+  <section class="container my-5">
+    <h2 class="text-center mb-4">Our Farmhouses</h2>
+    <div class="row g-4">
+      <!-- Farmhouse 1 -->
+      <div class="col-md-6">
+        <div class="card" data-bs-toggle="modal" data-bs-target="#farmhouse1Modal" style="cursor: pointer;">
+          <div class="card-img-container">
+            <img src="{% static 'images/farmhouse1/front.jpg' %}" alt="AK Farmhouse" />
+          </div>
+          <div class="card-body text-center">
+            <h5 class="card-title">AK Farmhouse</h5>
+            <button class="btn btn-outline-success btn-sm">View Images</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Farmhouse 2 -->
+      <div class="col-md-6">
+        <div class="card" data-bs-toggle="modal" data-bs-target="#farmhouse2Modal" style="cursor: pointer;">
+          <div class="card-img-container">
+            <img src="{% static 'images/farmhouse2/IMG-20250517-WA0009.jpg' %}" alt="Malusare Farmhouse" />
+          </div>
+          <div class="card-body text-center">
+            <h5 class="card-title">Malusare Farmhouse</h5>
+            <button class="btn btn-outline-success btn-sm">View Images</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modal 1 -->
+  <div class="modal fade" id="farmhouse1Modal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">AK Farmhouse Gallery</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="farmhouse1Carousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+              <div class="carousel-item active">
+                <img src="{% static 'images/farmhouse1/front.jpg' %}" class="d-block w-100" />
+              </div>
+              <div class="carousel-item">
+                <img src="{% static 'images/farmhouse1/hall.jpg' %}" class="d-block w-100" />
+              </div>
+              <div class="carousel-item">
+                <img src="{% static 'images/farmhouse1/garden.jpg' %}" class="d-block w-100" />
+              </div>
+              <div class="carousel-item">
+                <img src="{% static 'images/farmhouse1/pool.jpg' %}" class="d-block w-100" />
+              </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#farmhouse1Carousel" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#farmhouse1Carousel" data-bs-slide="next">
+              <span class="carousel-control-next-icon"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2 -->
+  <div class="modal fade" id="farmhouse2Modal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Malusare Gallery</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="farmhouse2Carousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+              <div class="carousel-item active">
+                <img src="{% static 'images/farmhouse2/IMG-20250517-WA0009.jpg' %}" class="d-block w-100" />
+              </div>
+              <!-- Add more images manually here as needed -->
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#farmhouse2Carousel" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#farmhouse2Carousel" data-bs-slide="next">
+              <span class="carousel-control-next-icon"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- About Section -->
+  {% include 'about.html' %}
+
+  <!-- Contact Section -->
+  {% include 'contact.html' %}
+
+  <!-- Footer -->
+  <footer class="bg-success text-white text-center p-3">
+    &copy; 2025 LaxmiFarmhouse.com. All rights reserved.
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
