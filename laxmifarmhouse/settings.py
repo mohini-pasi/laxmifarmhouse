@@ -138,3 +138,14 @@ MESSAGE_TAGS = {
 import os
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# settings.py
+
+import os
+from dotenv import load_dotenv
+load_dotenv()  # Load .env file automatically if it exists
+
+# Razorpay credentials from .env or system environment
+RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID')
+RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET')
+

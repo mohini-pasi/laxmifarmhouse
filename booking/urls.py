@@ -15,8 +15,5 @@ urlpatterns = [
     path('admin/', views.admin_dashboard, name='admin_panel'),
     path('admin/download/', views.download_excel, name='download_excel'),
     path('admin/download/pdf/', views.download_pdf, name='download_pdf'),
-
     path('admin/clear-all/', views.clear_all_bookings, name='clear_all_bookings'),
-
-    path('booking/', views.booking_view, name='booking'),
 ]

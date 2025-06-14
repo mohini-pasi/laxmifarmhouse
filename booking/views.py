@@ -1,27 +1,26 @@
-# booking/views.py
-
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.template.loader import get_template
+from django.conf import settings
 
 import mysql.connector
 import pandas as pd
 from io import BytesIO
-from datetime import datetime, timedelta
+from datetime import datetime
 import razorpay
 from xhtml2pdf import pisa
 
-# Razorpay config
-razorpay_client = razorpay.Client(auth=("YOUR_KEY_ID", "YOUR_KEY_SECRET"))
+# Razorpay client setup
+razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
-DB_CONFIG = dict(
-    host="localhost",
-    user="root",
-    password="root",
-    database="laxmifarmhouse"
-)
+DB_CONFIG = {
+    "host": "localhost",
+    "user": "root",
+    "password": "root",
+    "database": "laxmifarmhouse"
+}
 
 def get_db():
     return mysql.connector.connect(**DB_CONFIG)
@@ -45,20 +44,34 @@ def booking_view(request):
         check_out = request.POST.get("checkout")
         advance = request.POST.get("advance")
 
-        db = get_db()
-        cursor = db.cursor()
-        cursor.execute("SELECT * FROM customer WHERE farmhouse=%s AND check_in=%s", (farmhouse, check_in))
-        if cursor.fetchone():
-            messages.error(request, "❌ Selected check-in date is NOT available!")
+        if not (phone and len(phone) == 10 and phone.isdigit()):
+            messages.error(request, "Invalid phone number")
             return redirect('booking')
 
-        cursor.execute("""
-            INSERT INTO customer (name, phone, members, farmhouse, check_in, check_out, advance)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (name, phone, members, farmhouse, check_in, check_out, advance))
-        db.commit()
-        messages.success(request, "✅ Booking successful! Welcome to Laxmi Farmhouse.")
-        return redirect('home')
+        if not advance or int(advance) < 1000:
+            messages.error(request, "Advance must be at least ₹1000")
+            return redirect('booking')
+
+        db = get_db()
+        cursor = db.cursor()
+
+        try:
+            cursor.execute("SELECT * FROM customer WHERE farmhouse=%s AND check_in=%s", (farmhouse, check_in))
+            if cursor.fetchone():
+                messages.error(request, "❌ Selected check-in date is NOT available!")
+                return redirect('booking')
+
+            cursor.execute("""
+                INSERT INTO customer (name, phone, members, farmhouse, check_in, check_out, advance)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (name, phone, members, farmhouse, check_in, check_out, advance))
+            db.commit()
+
+            messages.success(request, "✅ Booking successful! Welcome to Laxmi Farmhouse.")
+            return redirect('home')
+        finally:
+            cursor.close()
+            db.close()
 
     return render(request, 'booking.html')
 
@@ -102,22 +115,31 @@ def admin_dashboard(request):
 
     db = get_db()
     cursor = db.cursor()
+    ak_bookings = []
+    malusare_bookings = []
 
-    if start and end:
-        cursor.execute("SELECT * FROM customer WHERE farmhouse='AK Farmhouse' AND check_in BETWEEN %s AND %s", (start, end))
-        ak_bookings = cursor.fetchall()
-        cursor.execute("SELECT * FROM customer WHERE farmhouse='Malusare Farmhouse' AND check_in BETWEEN %s AND %s", (start, end))
-        malusare_bookings = cursor.fetchall()
-    else:
-        cursor.execute("SELECT * FROM customer WHERE farmhouse='AK Farmhouse'")
-        ak_bookings = cursor.fetchall()
-        cursor.execute("SELECT * FROM customer WHERE farmhouse='Malusare Farmhouse'")
-        malusare_bookings = cursor.fetchall()
+    try:
+        if start and end:
+            cursor.execute("SELECT * FROM ak_bookings WHERE check_in BETWEEN %s AND %s", (start, end))
+            ak_bookings = cursor.fetchall()
+
+            cursor.execute("SELECT * FROM malusare_bookings WHERE check_in BETWEEN %s AND %s", (start, end))
+            malusare_bookings = cursor.fetchall()
+        else:
+            cursor.execute("SELECT * FROM ak_bookings")
+            ak_bookings = cursor.fetchall()
+
+            cursor.execute("SELECT * FROM malusare_bookings")
+            malusare_bookings = cursor.fetchall()
+    finally:
+        cursor.close()
+        db.close()
 
     return render(request, 'admin.html', {
         'ak_bookings': ak_bookings,
         'malusare_bookings': malusare_bookings,
-        'month_list': [],
+        'start_date': start,
+        'end_date': end,
     })
 
 def download_excel(request):
@@ -128,14 +150,14 @@ def download_excel(request):
     cursor = db.cursor()
 
     if start and end:
-        cursor.execute("SELECT name, phone, members, check_in, check_out, advance FROM customer WHERE farmhouse = 'AK Farmhouse' AND check_in BETWEEN %s AND %s", (start, end))
+        cursor.execute("SELECT name, phone, members, check_in, check_out, advance FROM ak_bookings WHERE check_in BETWEEN %s AND %s", (start, end))
         ak_data = cursor.fetchall()
-        cursor.execute("SELECT name, phone, members, check_in, check_out, advance FROM customer WHERE farmhouse = 'Malusare Farmhouse' AND check_in BETWEEN %s AND %s", (start, end))
+        cursor.execute("SELECT name, phone, members, check_in, check_out, advance FROM malusare_bookings WHERE check_in BETWEEN %s AND %s", (start, end))
         malusare_data = cursor.fetchall()
     else:
-        cursor.execute("SELECT name, phone, members, check_in, check_out, advance FROM customer WHERE farmhouse = 'AK Farmhouse'")
+        cursor.execute("SELECT name, phone, members, check_in, check_out, advance FROM ak_bookings")
         ak_data = cursor.fetchall()
-        cursor.execute("SELECT name, phone, members, check_in, check_out, advance FROM customer WHERE farmhouse = 'Malusare Farmhouse'")
+        cursor.execute("SELECT name, phone, members, check_in, check_out, advance FROM malusare_bookings")
         malusare_data = cursor.fetchall()
 
     output = BytesIO()
@@ -156,18 +178,18 @@ def download_pdf(request):
     cursor = db.cursor()
 
     if start and end:
-        cursor.execute("SELECT name, phone, members, check_in, check_out, advance FROM customer WHERE farmhouse = 'AK Farmhouse' AND check_in BETWEEN %s AND %s", (start, end))
+        cursor.execute("SELECT name, phone, members, check_in, check_out, advance FROM ak_bookings WHERE check_in BETWEEN %s AND %s", (start, end))
         ak_data = cursor.fetchall()
-        cursor.execute("SELECT name, phone, members, check_in, check_out, advance FROM customer WHERE farmhouse = 'Malusare Farmhouse' AND check_in BETWEEN %s AND %s", (start, end))
+        cursor.execute("SELECT name, phone, members, check_in, check_out, advance FROM malusare_bookings WHERE check_in BETWEEN %s AND %s", (start, end))
         malusare_data = cursor.fetchall()
     else:
-        cursor.execute("SELECT name, phone, members, check_in, check_out, advance FROM customer WHERE farmhouse = 'AK Farmhouse'")
+        cursor.execute("SELECT name, phone, members, check_in, check_out, advance FROM ak_bookings")
         ak_data = cursor.fetchall()
-        cursor.execute("SELECT name, phone, members, check_in, check_out, advance FROM customer WHERE farmhouse = 'Malusare Farmhouse'")
+        cursor.execute("SELECT name, phone, members, check_in, check_out, advance FROM malusare_bookings")
         malusare_data = cursor.fetchall()
 
     template = get_template("pdf_template.html")
-    html = template.render({ 'ak_bookings': ak_data, 'malusare_bookings': malusare_data })
+    html = template.render({'ak_bookings': ak_data, 'malusare_bookings': malusare_data})
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="farmhouse_bookings.pdf"'
     pisa_status = pisa.CreatePDF(html, dest=response)
@@ -178,39 +200,10 @@ def clear_all_bookings(request):
     if request.method == 'POST':
         db = get_db()
         cursor = db.cursor()
-        cursor.execute("DELETE FROM customer")
+        cursor.execute("DELETE FROM ak_bookings")
+        cursor.execute("DELETE FROM malusare_bookings")
         db.commit()
+        cursor.close()
+        db.close()
         messages.success(request, "✅ All bookings have been cleared.")
-    return redirect("admin_panel")
-
-def booking_view(request):
-    if request.method == "POST":
-        name = request.POST.get("name")
-        phone = request.POST.get("phone")
-        members = request.POST.get("members")
-        farmhouse = request.POST.get("farmhouse")
-        check_in = request.POST.get("checkin")
-        check_out = request.POST.get("checkout")
-        advance = request.POST.get("advance")
-
-        db = get_db()
-        cursor = db.cursor()
-
-        # Check if date is already booked
-        cursor.execute("SELECT * FROM customer WHERE farmhouse=%s AND check_in=%s", (farmhouse, check_in))
-        if cursor.fetchone():
-            messages.error(request, "❌ Selected check-in date is NOT available!")
-            return redirect('booking')
-
-        # Insert booking
-        cursor.execute("""
-            INSERT INTO customer (name, phone, members, farmhouse, check_in, check_out, advance)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (name, phone, members, farmhouse, check_in, check_out, advance))
-        db.commit()
-
-        messages.success(request, "✅ Booking successful! Welcome to Laxmi Farmhouse.")
-        return redirect('home')
-
-    return render(request, 'booking.html')
-
+    return redirect("admin")
