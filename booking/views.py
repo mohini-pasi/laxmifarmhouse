@@ -11,10 +11,12 @@ from io import BytesIO
 from datetime import datetime
 import razorpay
 from xhtml2pdf import pisa
+import json
 
 # Razorpay client setup
 razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
+# Database Configuration
 DB_CONFIG = {
     "host": "localhost",
     "user": "root",
@@ -25,6 +27,7 @@ DB_CONFIG = {
 def get_db():
     return mysql.connector.connect(**DB_CONFIG)
 
+# Page Views
 def home(request):
     return render(request, 'index.html')
 
@@ -34,16 +37,24 @@ def about(request):
 def contact(request):
     return render(request, 'contact.html')
 
+# Booking View
 def booking_view(request):
     if request.method == "POST":
         name = request.POST.get("name")
         phone = request.POST.get("phone")
         members = request.POST.get("members")
-        farmhouse = request.POST.get("farmhouse")
+        farmhouse_key = request.POST.get("farmhouse")  # e.g., "ak", "malusare"
         check_in = request.POST.get("checkin")
         check_out = request.POST.get("checkout")
         advance = request.POST.get("advance")
 
+        # FARMHOUSE MAP
+        farmhouse_map = {
+            "ak": {"name": "AK Farmhouse", "table": "ak_bookings"},
+            "malusare": {"name": "Malusare Farmhouse", "table": "malusare_bookings"},
+        }
+
+        # ✅ Basic Validations
         if not (phone and len(phone) == 10 and phone.isdigit()):
             messages.error(request, "Invalid phone number")
             return redirect('booking')
@@ -52,21 +63,28 @@ def booking_view(request):
             messages.error(request, "Advance must be at least ₹1000")
             return redirect('booking')
 
+        farmhouse_key = request.POST.get("farmhouse")
+        print("🔍 Selected farmhouse key from form:", farmhouse_key)
+        # Set correct values
+        farmhouse_name = farmhouse_map[farmhouse_key]["name"]
+        table = farmhouse_map[farmhouse_key]["table"]
+
+        # DB Insert
         db = get_db()
         cursor = db.cursor()
-
         try:
-            cursor.execute("SELECT * FROM customer WHERE farmhouse=%s AND check_in=%s", (farmhouse, check_in))
+            # Check availability
+            cursor.execute(f"SELECT * FROM {table} WHERE check_in = %s", (check_in,))
             if cursor.fetchone():
                 messages.error(request, "❌ Selected check-in date is NOT available!")
                 return redirect('booking')
 
-            cursor.execute("""
-                INSERT INTO customer (name, phone, members, farmhouse, check_in, check_out, advance)
+            # Insert booking
+            cursor.execute(f"""
+                INSERT INTO {table} (name, phone, members, farmhouse, check_in, check_out, advance)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, (name, phone, members, farmhouse, check_in, check_out, advance))
+            """, (name, phone, members, farmhouse_name, check_in, check_out, advance))
             db.commit()
-
             messages.success(request, "✅ Booking successful! Welcome to Laxmi Farmhouse.")
             return redirect('home')
         finally:
@@ -75,23 +93,29 @@ def booking_view(request):
 
     return render(request, 'booking.html')
 
+# Razorpay Payment APIs
 @csrf_exempt
 def create_order(request):
     if request.method == "POST":
         amount = int(request.POST["advance"]) * 100
-        payment = razorpay_client.order.create({"amount": amount, "currency": "INR", "payment_capture": "1"})
+        payment = razorpay_client.order.create({
+            "amount": amount,
+            "currency": "INR",
+            "payment_capture": "1"
+        })
         return JsonResponse(payment)
 
 @csrf_exempt
 def verify_payment(request):
     if request.method == "POST":
-        data = request.body.decode("utf-8")
+        data = json.loads(request.body.decode("utf-8"))
         try:
-            razorpay_client.utility.verify_payment_signature(eval(data))
+            razorpay_client.utility.verify_payment_signature(data)
             return JsonResponse({"status": "success"})
         except razorpay.errors.SignatureVerificationError:
             return JsonResponse({"status": "failed"})
 
+# Admin Authentication
 def admin_login(request):
     if request.method == 'POST':
         if request.POST.get('username') == 'mahesh' and request.POST.get('password') == 'mahesh123':
@@ -106,6 +130,7 @@ def admin_logout(request):
     messages.success(request, 'Logged out successfully.')
     return redirect('home')
 
+# Admin Dashboard
 def admin_dashboard(request):
     if not request.session.get('admin_logged_in'):
         return redirect('admin_login')
@@ -115,20 +140,17 @@ def admin_dashboard(request):
 
     db = get_db()
     cursor = db.cursor()
-    ak_bookings = []
-    malusare_bookings = []
+    ak_bookings, malusare_bookings = [], []
 
     try:
         if start and end:
             cursor.execute("SELECT * FROM ak_bookings WHERE check_in BETWEEN %s AND %s", (start, end))
             ak_bookings = cursor.fetchall()
-
             cursor.execute("SELECT * FROM malusare_bookings WHERE check_in BETWEEN %s AND %s", (start, end))
             malusare_bookings = cursor.fetchall()
         else:
             cursor.execute("SELECT * FROM ak_bookings")
             ak_bookings = cursor.fetchall()
-
             cursor.execute("SELECT * FROM malusare_bookings")
             malusare_bookings = cursor.fetchall()
     finally:
@@ -142,6 +164,7 @@ def admin_dashboard(request):
         'end_date': end,
     })
 
+# Excel Report
 def download_excel(request):
     start = request.GET.get('start_date')
     end = request.GET.get('end_date')
@@ -170,6 +193,7 @@ def download_excel(request):
     response['Content-Disposition'] = 'attachment; filename="farmhouse_bookings.xlsx"'
     return response
 
+# PDF Report
 def download_pdf(request):
     start = request.GET.get('start_date')
     end = request.GET.get('end_date')
@@ -195,6 +219,7 @@ def download_pdf(request):
     pisa_status = pisa.CreatePDF(html, dest=response)
     return response if not pisa_status.err else HttpResponse("Error generating PDF", status=500)
 
+# Clear All Bookings
 @csrf_exempt
 def clear_all_bookings(request):
     if request.method == 'POST':

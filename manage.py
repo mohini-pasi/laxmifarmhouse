@@ -20,3 +20,11 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+class Booking(models.Model):
+    ...
+    FARMHOUSE_CHOICES = [
+        ('ak', 'AK Farmhouse'),
+        ('malusare', 'Malusare Farmhouse'),
+    ]
+    farmhouse = models.CharField(max_length=20, choices=FARMHOUSE_CHOICES)

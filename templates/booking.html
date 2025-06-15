@@ -27,47 +27,46 @@
       <form method="POST" action="{% url 'booking' %}" class="row g-4" onsubmit="return validateForm()">
         {% csrf_token %}
 
-        <!-- Name & Phone -->
         <div class="col-md-6">
           <label for="name" class="form-label">Name</label>
           <input type="text" class="form-control" name="name" id="name" required />
         </div>
+
         <div class="col-md-6">
           <label for="phone" class="form-label">Phone</label>
           <input type="text" class="form-control" name="phone" id="phone" pattern="\d{10}" maxlength="10" required placeholder="Enter 10-digit phone number" />
         </div>
 
-        <!-- Members & Farmhouse -->
         <div class="col-md-4">
           <label for="members" class="form-label">Members</label>
           <input type="number" class="form-control" name="members" id="members" min="1" max="50" required />
         </div>
+
         <div class="col-md-4">
           <label for="farmhouse" class="form-label">Farmhouse</label>
           <select class="form-select" name="farmhouse" id="farmhouse" required>
-            <option selected disabled>Select</option>
-            <option value="AK Farmhouse">AK Farmhouse</option>
-            <option value="Malusure Farmhouse">Malusure Farmhouse</option>
+          <option selected disabled>Select</option>
+          <option value="ak">AK Farmhouse</option>
+          <option value="malusare">Malusare Farmhouse</option>
           </select>
+
         </div>
 
-        <!-- Check-in & Check-out -->
         <div class="col-md-4">
           <label for="checkin" class="form-label">Check-in Date</label>
           <input type="date" class="form-control" name="checkin" id="checkin" required />
         </div>
+
         <div class="col-md-4">
           <label for="checkout" class="form-label">Check-out Date</label>
           <input type="date" class="form-control" name="checkout" id="checkout" required />
         </div>
 
-        <!-- Advance Payment -->
         <div class="col-md-4">
           <label for="advance" class="form-label">Advance Payment (₹)</label>
           <input type="number" class="form-control" name="advance" id="advance" min="1000" required placeholder="Min ₹1000" />
         </div>
 
-        <!-- QR Display -->
         <div class="col-12 text-center" id="qr-code">
           <label class="form-label">Scan to Pay Advance (mohinipasi1122-1@oksbi)</label>
           <div>
@@ -76,7 +75,6 @@
           </div>
         </div>
 
-        <!-- WhatsApp Share -->
         <div class="col-md-6">
           <label class="form-label">Share on WhatsApp</label>
           <div class="text-center">
@@ -84,7 +82,6 @@
           </div>
         </div>
 
-        <!-- Submit Button -->
         <div class="col-12 text-center">
           <button type="submit" class="btn btn-success px-5">Submit Booking</button>
         </div>
